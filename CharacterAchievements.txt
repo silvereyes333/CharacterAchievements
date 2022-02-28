@@ -1,0 +1,14 @@
+## Title: Character Achievements
+## Author: silvereyes
+## Description: Tracks achievements per-character, the way they were before Update 33. Automatically backs up completed achievements when logging in before Update 33, or allows manually setting achievement dates afterwards.
+## Version: 1.0.0
+## APIVersion: 101032 101033
+## DependsOn: LibSavedVars>=50000, LibDebugLogger>=180
+## SavedVariables: CharacterAchievementsData
+
+## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
+
+CharacterAchievements.lua
+classes/Backup.lua
+classes/Data.lua
+classes/Utility.lua
