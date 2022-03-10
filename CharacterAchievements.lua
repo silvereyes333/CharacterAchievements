@@ -10,15 +10,19 @@ CharacterAchievements = {
 
 -- Local declarations
 local addon = CharacterAchievements
-local onAddonLoaded
 
 
 
 ---------------------------------------
 --
---          Public Methods
+--          Public Members
 -- 
 ---------------------------------------
+
+if LibChatMessage then
+    addon.Chat = LibChatMessage(addon.name, "CharAchvmts")
+end
+
 
 
 ---------------------------------------
@@ -27,19 +31,5 @@ local onAddonLoaded
 -- 
 ---------------------------------------
 
-function onAddonLoaded(event, name)
-    if name ~= addon.name then return end
-    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_ADD_ON_LOADED)
-    
-    if GetAPIVersion() >= 101033 then
-        addon.Events:Initialize()
-    else
-        addon.Backup:SaveAllAchievements()
-    end
-end
 
 
-
-
--- Register addon
-EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_ADD_ON_LOADED, onAddonLoaded)

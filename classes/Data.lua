@@ -1,7 +1,7 @@
 local addon = CharacterAchievements
 local class = addon.classes
 local debug = false
-local ZONE_ACHIEVEMENTS, BOSS_ACHIEVEMENTS, DATA_DEFAULTS
+local LAA = LibAchievementsArchive
 
 local Data = ZO_Object:Subclass()
 
@@ -13,20 +13,25 @@ end
 
 function Data:Initialize()
     
-    self.save = LibSavedVars:NewCharacterSettings(addon.name .. "Data", {})
     self.esoui = {}
     self.esouiNames = {
+        GetCharIdForCompletedAchievement = "GetCharIdForCompletedAchievement",
+        GetCriterion = "GetAchievementCriterion",
         GetInfo = "GetAchievementInfo",
-        GetTimestamp = "GetAchievementTimestamp",
+        GetLink = "GetAchievementLink",
         GetPersistenceLevel = "GetAchievementPersistenceLevel",
-        GetCharIdForCompletedAchievement = "GetCharIdForCompletedAchievement"
+        GetProgress = "GetAchievementProgress",
+        GetTimestamp = "GetAchievementTimestamp",
     }
     
-    for handlerName, methodName in pairs(self.esoui) do
+    local isUpdate33Released = GetAPIVersion() >= 101033
+    for handlerName, methodName in pairs(self.esouiNames) do
         local method = _G[methodName]
         if method then
             self.esoui[methodName] = method
-            _G[methodName] = self:Closure(handlerName)
+            if isUpdate33Released then
+                _G[methodName] = self:Closure(handlerName)
+            end
         end
     end
 end
@@ -42,45 +47,71 @@ end
 --[[  ]]
 function Data:Closure(functionName)
     return function(...)
-        self[functionName](self, ...)
+        return self[functionName](self, ...)
     end
+end
+
+--[[  ]]
+function Data:GetCharIdForCompletedAchievement(achievementId)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) or not GetCharIdForCompletedAchievement then
+        return StringToId64(GetCurrentCharacterId())
+    end
+    return self.esoui.GetCharIdForCompletedAchievement(achievementId)
+end
+
+--[[  ]]
+function Data:GetCriterion(achievementId, criterionIndex)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) then
+        -- Restore original ESO API for criterion to avoid infinite recursion
+        local closure = GetAchievementCriterion
+        GetAchievementCriterion = self.esoui.GetAchievementCriterion
+        local returns = {LAA.ArchivedGetAchievementCriterion(nil, achievementId, criterionIndex)}
+        -- Overwrite the ESO API for criterion again
+        GetAchievementCriterion = closure
+        return unpack(returns)
+    end
+    return self.esoui.GetAchievementCriterion(achievementId, criterionIndex)
 end
 
 --[[  ]]
 function Data:GetInfo(achievementId)
     local name, description, points, icon, completed, date, time = self.esoui.GetAchievementInfo(achievementId)
-    local timestamp = self.save[achievementId]
-    if timestamp then
-        date, time = FormatAchievementLinkTimestamp(timestamp)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) then
+        local timestamp = LAA.ArchivedGetAchievementTimestamp(nil, achievementId)
+        date, time = FormatAchievementLinkTimestamp(Id64ToString(timestamp))
         completed = true
     end
     return name, description, points, icon, completed, date, time
 end
 
 --[[  ]]
-function Data:GetPersistenceLevel(achievementId)
-    if self.save[achievementId] or not ACHIEVEMENT_PERSISTENCE_CHARACTER then
-        return ACHIEVEMENT_PERSISTENCE_CHARACTER
+function Data:GetLink(achievementId, linkStyle)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) then
+        return LAA.ArchivedGetAchievementLink(nil, achievementId, linkStyle)
     end
-    return self.esoui.GetPersistenceLevel(achievementId)
+    return self.esoui.GetAchievementLink(achievementId, linkStyle)
 end
 
 --[[  ]]
-function Data:GetCharIdForCompletedAchievement(achievementId)
-    if self.save[achievementId] or not GetCharIdForCompletedAchievement then
-        return GetCurrentCharacterId()
+function Data:GetPersistenceLevel(achievementId)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) or not ACHIEVEMENT_PERSISTENCE_CHARACTER then
+        return ACHIEVEMENT_PERSISTENCE_CHARACTER
     end
-    return self.esoui.GetCharIdForCompletedAchievement(achievementId)
+    return self.esoui.GetAchievementPersistenceLevel(achievementId)
+end
+
+--[[  ]]
+function Data:GetProgress(achievementId)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) then
+        return LAA.ArchivedGetAchievementProgress(nil, achievementId)
+    end
+    return self.esoui.GetAchievementProgress(achievementId)
 end
 
 --[[  ]]
 function Data:GetTimestamp(achievementId)
-    return self.save[achievementId] or GetAchievementTimestamp(achievementId)
-end
-
---[[ Sets the given achievement id as completed by the current character at the given timestamp ]]
-function Data:SetCompletedTimestamp(achievementId, timestamp)
-    self.save[achievementId] = timestamp
+    return LAA.ArchivedGetAchievementTimestamp(nil, achievementId)
+           or self.esoui.GetAchievementTimestamp(achievementId)
 end
 
 ---------------------------------------
