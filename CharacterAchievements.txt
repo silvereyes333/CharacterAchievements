@@ -1,7 +1,7 @@
 ## Title: Character Achievements
 ## Author: silvereyes
 ## Description: Displays achievements backed up with LibAchievementsArchive as character-specific achievements with dates in the quest journal.
-## Version: 1.0.0
+## Version: 1.0.1
 ## APIVersion: 101032 101033
 ## DependsOn: LibAchievementsArchive>=1
 ## OptionalDependsOn: LibChatMessage

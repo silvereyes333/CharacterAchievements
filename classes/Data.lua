@@ -22,6 +22,7 @@ function Data:Initialize()
         GetPersistenceLevel = "GetAchievementPersistenceLevel",
         GetProgress = "GetAchievementProgress",
         GetTimestamp = "GetAchievementTimestamp",
+        IsComplete = "IsAchievementComplete",
     }
     
     local isUpdate33Released = GetAPIVersion() >= 101033
@@ -110,8 +111,18 @@ end
 
 --[[  ]]
 function Data:GetTimestamp(achievementId)
-    return LAA.ArchivedGetAchievementTimestamp(nil, achievementId)
-           or self.esoui.GetAchievementTimestamp(achievementId)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) then
+        return LAA.ArchivedGetAchievementTimestamp(nil, achievementId)
+    end
+    return self.esoui.GetAchievementTimestamp(achievementId)
+end
+
+--[[  ]]
+function Data:IsComplete(achievementId)
+    if LAA.ArchivedIsAchievementComplete(nil, achievementId) then
+        return true
+    end
+    return self.esoui.IsAchievementComplete(achievementId)
 end
 
 ---------------------------------------
