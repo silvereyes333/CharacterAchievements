@@ -6,9 +6,7 @@ local LAA = LibAchievementsArchive
 local Data = ZO_Object:Subclass()
 
 function Data:New(...)
-    local instance = ZO_Object.New(self)
-    self.Initialize(instance, ...)
-    return instance
+    return ZO_Object.New(self)
 end
 
 function Data:Initialize()
@@ -25,14 +23,11 @@ function Data:Initialize()
         IsComplete = "IsAchievementComplete",
     }
     
-    local isUpdate33Released = GetAPIVersion() >= 101033
     for handlerName, methodName in pairs(self.esouiNames) do
         local method = _G[methodName]
         if method then
             self.esoui[methodName] = method
-            if isUpdate33Released then
-                _G[methodName] = self:Closure(handlerName)
-            end
+            _G[methodName] = self:Closure(handlerName)
         end
     end
 end
